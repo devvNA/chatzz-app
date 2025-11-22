@@ -16,22 +16,15 @@
     - Handle null values with defaults
     - Support Firestore Timestamp conversion
     - _Requirements: 5.1, 5.2, 5.3_
-  
+
   - [ ]* 2.2 Write property test for model serialization
     - **Property 5: Model serialization round-trip**
     - **Validates: Requirements 5.1**
-  
   - [ ]* 2.3 Write property test for copyWith
     - **Property 6: copyWith preserves unchanged fields**
     - **Validates: Requirements 5.3**
 
 - [x] 3. Implement Firebase services
-
-
-
-
-
-
   - [x] 3.1 Create AuthService
 
     - Implement signIn, register, signOut methods
