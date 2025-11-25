@@ -1,6 +1,11 @@
+import 'dart:developer';
+
+import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+
+import '../../core/errors/failures.dart';
 
 class AuthService extends GetxService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -9,88 +14,87 @@ class AuthService extends GetxService {
   static const String _sessionKey = 'user_session';
 
   /// Sign in with email and password
-  /// Returns User on success, throws FirebaseAuthException on failure
-  Future<User?> signIn(String email, String password) async {
+  /// Returns Either<AuthFailure, User> - Left for error, Right for success
+  Future<Either<AuthFailure, User>> signIn(
+    String email,
+    String password,
+  ) async {
     try {
+      // Validate inputs
+      if (email.isEmpty || password.isEmpty) {
+        return Left(
+          AuthFailure('Email and password are required', code: 'invalid-input'),
+        );
+      }
+
       final credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       if (credential.user != null) {
-        // Store session token for auto-login
+        log(
+          'User ${credential.user!.uid} signed in successfully. Storing session.',
+        );
         await _storage.write(_sessionKey, credential.user!.uid);
+        return Right(credential.user!);
+      } else {
+        log('Sign-in successful, but credential.user is null for $email.');
+        return Left(AuthFailure('Failed to get user data', code: 'null-user'));
       }
-
-      return credential.user;
     } on FirebaseAuthException catch (e) {
-      String message;
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'No user found with this email';
-          break;
-        case 'wrong-password':
-          message = 'Incorrect password';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address';
-          break;
-        case 'user-disabled':
-          message = 'This account has been disabled';
-          break;
-        default:
-          message = e.message ?? 'Authentication failed';
-      }
-      throw FirebaseAuthException(code: e.code, message: message);
+      log('FirebaseAuthException during sign-in for $email: Code=${e.code}');
+      return Left(AuthFailure.fromFirebaseAuth(e));
+    } catch (e) {
+      log('Unknown error during sign-in for $email: ${e.toString()}');
+      return Left(AuthFailure.unknown(e));
     }
   }
 
   /// Register new user with email and password
-  /// Returns User on success, throws FirebaseAuthException on failure
-  Future<User?> register(String email, String password) async {
+  /// Returns Either<AuthFailure, User> - Left for error, Right for success
+  Future<Either<AuthFailure, User>> register(
+    String email,
+    String password,
+  ) async {
     try {
+      // Validate inputs
+      if (email.isEmpty || password.isEmpty) {
+        return Left(
+          AuthFailure('Email and password are required', code: 'invalid-input'),
+        );
+      }
+
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       if (credential.user != null) {
-        // Store session token for auto-login
         await _storage.write(_sessionKey, credential.user!.uid);
+        return Right(credential.user!);
+      } else {
+        return Left(AuthFailure('Failed to create user', code: 'null-user'));
       }
-
-      return credential.user;
     } on FirebaseAuthException catch (e) {
-      String message;
-      switch (e.code) {
-        case 'email-already-in-use':
-          message = 'An account already exists with this email';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address';
-          break;
-        case 'weak-password':
-          message = 'Password is too weak (minimum 6 characters)';
-          break;
-        case 'operation-not-allowed':
-          message = 'Email/password accounts are not enabled';
-          break;
-        default:
-          message = e.message ?? 'Registration failed';
-      }
-      throw FirebaseAuthException(code: e.code, message: message);
+      return Left(AuthFailure.fromFirebaseAuth(e));
+    } catch (e) {
+      return Left(AuthFailure.unknown(e));
     }
   }
 
   /// Sign out current user and clear session
-  Future<void> signOut() async {
+  /// Returns Either<AuthFailure, Unit> - Left for error, Right for success
+  Future<Either<AuthFailure, Unit>> signOut() async {
     try {
       await _auth.signOut();
       await _storage.remove(_sessionKey);
+      return const Right(unit);
     } on FirebaseAuthException catch (e) {
-      throw FirebaseAuthException(
-        code: e.code,
-        message: e.message ?? 'Sign out failed',
+      return Left(AuthFailure.fromFirebaseAuth(e));
+    } catch (e) {
+      return Left(
+        AuthFailure('Failed to sign out: ${e.toString()}', code: 'unknown'),
       );
     }
   }
@@ -106,13 +110,29 @@ class AuthService extends GetxService {
 
   /// Validate session with Firebase
   Future<bool> validateSession() async {
-    final token = sessionToken;
-    if (token == null) return false;
-
     try {
+      final token = sessionToken;
+      if (token == null) return false;
+
+      // Check if current user exists
+      if (_auth.currentUser == null) {
+        await _storage.remove(_sessionKey);
+        return false;
+      }
+
+      // Reload user to verify token is still valid
       await _auth.currentUser?.reload();
-      return _auth.currentUser != null;
+
+      // Verify user still exists after reload
+      final isValid = _auth.currentUser != null;
+
+      if (!isValid) {
+        await _storage.remove(_sessionKey);
+      }
+
+      return isValid;
     } catch (e) {
+      // Clear invalid session
       await _storage.remove(_sessionKey);
       return false;
     }

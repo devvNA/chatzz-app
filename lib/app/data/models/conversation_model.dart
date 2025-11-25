@@ -3,12 +3,14 @@ class ConversationModel {
   final List<String> participants;
   final String lastMessage;
   final DateTime lastMessageTime;
+  final int unreadCount;
 
   ConversationModel({
     required this.id,
     List<String>? participants,
     this.lastMessage = '',
     DateTime? lastMessageTime,
+    this.unreadCount = 0,
   }) : participants = participants ?? [],
        lastMessageTime = lastMessageTime ?? DateTime.now();
 
@@ -18,6 +20,7 @@ class ConversationModel {
     'participants': participants,
     'lastMessage': lastMessage,
     'lastMessageTime': lastMessageTime.millisecondsSinceEpoch,
+    'unreadCount': unreadCount,
   };
 
   /// Create model from Firestore JSON
@@ -31,6 +34,7 @@ class ConversationModel {
       lastMessageTime: json['lastMessageTime'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['lastMessageTime'] as int)
           : DateTime.now(),
+      unreadCount: json['unreadCount'] ?? 0,
     );
   }
 
@@ -40,12 +44,14 @@ class ConversationModel {
     List<String>? participants,
     String? lastMessage,
     DateTime? lastMessageTime,
+    int? unreadCount,
   }) {
     return ConversationModel(
       id: id ?? this.id,
       participants: participants ?? this.participants,
       lastMessage: lastMessage ?? this.lastMessage,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
+      unreadCount: unreadCount ?? this.unreadCount,
     );
   }
 
@@ -57,7 +63,8 @@ class ConversationModel {
         _listEquals(other.participants, participants) &&
         other.lastMessage == lastMessage &&
         other.lastMessageTime.millisecondsSinceEpoch ==
-            lastMessageTime.millisecondsSinceEpoch;
+            lastMessageTime.millisecondsSinceEpoch &&
+        other.unreadCount == unreadCount;
   }
 
   @override
@@ -65,7 +72,8 @@ class ConversationModel {
     return id.hashCode ^
         participants.hashCode ^
         lastMessage.hashCode ^
-        lastMessageTime.hashCode;
+        lastMessageTime.hashCode ^
+        unreadCount.hashCode;
   }
 
   bool _listEquals(List<String> a, List<String> b) {

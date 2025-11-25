@@ -7,7 +7,10 @@ abstract class Routes {
   static const REGISTER = _Paths.REGISTER;
   static const HOME = _Paths.HOME;
   static const CHAT = _Paths.CHAT;
+  static const NEW_CHAT = _Paths.NEW_CHAT;
   static const PROFILE = _Paths.PROFILE;
+  static const SETTINGS = _Paths.SETTINGS;
+  static const BASE = _Paths.BASE;
 }
 
 abstract class _Paths {
@@ -17,5 +20,8 @@ abstract class _Paths {
   static const REGISTER = '/register';
   static const HOME = '/home';
   static const CHAT = '/chat';
+  static const NEW_CHAT = '/new-chat';
   static const PROFILE = '/profile';
+  static const SETTINGS = '/settings';
+  static const BASE = '/base';
 }
