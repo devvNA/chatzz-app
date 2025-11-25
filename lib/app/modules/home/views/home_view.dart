@@ -69,75 +69,71 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildSearchBar(BuildContext context, HomeController controller) {
-    final isDark = context.isDark;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColorsDark.surface : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 16),
-          Icon(
-            Icons.search_rounded,
-            color: context.textSecondaryColor.withValues(alpha: 0.5),
-            size: 22,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: controller.searchController,
-              focusNode: controller.searchFocusNode,
-              onChanged: controller.onSearchChanged,
-              style: TextStyle(fontSize: 16, color: context.textPrimaryColor),
-              decoration: InputDecoration(
-                hintText: 'Search conversations...',
-                hintStyle: TextStyle(
-                  fontSize: 16,
-                  color: context.textSecondaryColor.withValues(alpha: 0.5),
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: controller.searchController,
+            focusNode: controller.searchFocusNode,
+            onChanged: controller.onSearchChanged,
+            style: TextStyle(fontSize: 16, color: context.textPrimaryColor),
+            decoration: InputDecoration(
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: context.textSecondaryColor.withValues(alpha: 0.5),
+                size: 22,
               ),
+              hintText: 'Search conversations...',
+              hintStyle: TextStyle(
+                fontSize: 16,
+                color: context.textSecondaryColor.withValues(alpha: 0.5),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              suffixIcon: Obx(() {
+                if (controller.searchQuery.value.isNotEmpty) {
+                  return GestureDetector(
+                    onTap: controller.clearSearch,
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: context.textSecondaryColor.withValues(
+                          alpha: 0.5,
+                        ),
+                        size: 20,
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
             ),
-          ),
-          Obx(() {
-            if (controller.searchQuery.value.isNotEmpty) {
-              return GestureDetector(
-                onTap: controller.clearSearch,
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Icon(
-                    Icons.close_rounded,
-                    color: context.textSecondaryColor.withValues(alpha: 0.5),
-                    size: 20,
-                  ),
-                ),
-              );
-            }
+          ).paddingOnly(left: 18),
+        ),
+        Obx(() {
+          if (controller.searchQuery.value.isNotEmpty) {
             return GestureDetector(
-              onTap: () => _showFilterBottomSheet(context, controller),
+              onTap: controller.clearSearch,
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Icon(
-                  Icons.tune_rounded,
+                  Icons.close_rounded,
                   color: context.textSecondaryColor.withValues(alpha: 0.5),
-                  size: 22,
+                  size: 20,
                 ),
               ),
             );
-          }),
-        ],
-      ),
+          }
+          return GestureDetector(
+            onTap: () => _showFilterBottomSheet(context, controller),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Icon(Icons.tune_rounded, color: Colors.black, size: 22),
+            ),
+          );
+        }),
+      ],
     );
   }
 

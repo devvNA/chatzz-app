@@ -35,11 +35,13 @@ class BaseView extends GetView<BaseController> {
         return const HomeView();
       case 1:
         return Builder(
-          builder: (context) => _buildComingSoonPage(context, 'Contacts', Icons.group_rounded),
+          builder: (context) =>
+              _buildComingSoonPage(context, 'Contacts', Icons.group_rounded),
         );
       case 2:
         return Builder(
-          builder: (context) => _buildComingSoonPage(context, 'Explore', Icons.explore_rounded),
+          builder: (context) =>
+              _buildComingSoonPage(context, 'Explore', Icons.explore_rounded),
         );
       case 3:
         return const SettingsView();
@@ -48,7 +50,11 @@ class BaseView extends GetView<BaseController> {
     }
   }
 
-  Widget _buildComingSoonPage(BuildContext context, String title, IconData icon) {
+  Widget _buildComingSoonPage(
+    BuildContext context,
+    String title,
+    IconData icon,
+  ) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -104,8 +110,8 @@ class BaseView extends GetView<BaseController> {
           ),
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
-            color: isDark 
-                ? AppColorsDark.border.withValues(alpha: 0.3) 
+            color: isDark
+                ? AppColorsDark.border.withValues(alpha: 0.3)
                 : Colors.white,
             width: 2,
           ),
@@ -126,7 +132,7 @@ class BaseView extends GetView<BaseController> {
             children: [
               _buildNavItem(
                 context: context,
-                icon: Icons.chat_bubble_rounded,
+                icon: Icons.chat,
                 label: 'Chats',
                 index: 0,
                 isSelected: controller.selectedIndex.value == 0,
@@ -168,7 +174,7 @@ class BaseView extends GetView<BaseController> {
     bool showBadge = false,
   }) {
     final isDark = context.isDark;
-    
+
     final color = isSelected
         ? (isDark ? AppColorsDark.primary : const Color(0xFF005C4B))
         : (isDark ? AppColorsDark.textSecondary : const Color(0xFF588B7E));
