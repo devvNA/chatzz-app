@@ -44,7 +44,6 @@ class HomeController extends GetxController {
         result = result.where((c) => c.lastMessageTime.isAfter(oneDayAgo)).toList();
         break;
       case ConversationFilter.all:
-      default:
         break;
     }
 

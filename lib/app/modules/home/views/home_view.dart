@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_helper.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/home_controller.dart';
 
@@ -12,30 +13,21 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    return const HomeContent();
-  }
-}
-
-class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
     return GetBuilder<HomeController>(
       init: HomeController(),
       builder: (controller) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FFFE),
+          backgroundColor: context.screenBackgroundColor,
           body: Column(
             children: [
               _buildGradientHeader(context, controller),
-              _buildFilterChips(controller),
-              Expanded(child: _buildConversationList(controller)),
+              _buildFilterChips(context, controller),
+              Expanded(child: _buildConversationList(context, controller)),
             ],
           ),
           floatingActionButton: Padding(
             padding: EdgeInsets.only(bottom: Get.height * 0.12, right: 12),
-            child: _buildFAB(controller),
+            child: _buildFAB(context, controller),
           ),
         );
       },
@@ -44,9 +36,9 @@ class HomeContent extends StatelessWidget {
 
   Widget _buildGradientHeader(BuildContext context, HomeController controller) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          colors: [context.gradientStartColor, context.gradientEndColor],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -54,36 +46,21 @@ class HomeContent extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Column(
+          crossAxisAlignment: .start,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Chatzz',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => controller.navigateToNewChat(),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                ],
+              child: const Text(
+                'Chatzz',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
-            _buildSearchBar(controller),
+            _buildSearchBar(context, controller),
             const SizedBox(height: 16),
           ],
         ),
@@ -91,15 +68,17 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchBar(HomeController controller) {
+  Widget _buildSearchBar(BuildContext context, HomeController controller) {
+    final isDark = context.isDark;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColorsDark.surface : Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -110,7 +89,7 @@ class HomeContent extends StatelessWidget {
           const SizedBox(width: 16),
           Icon(
             Icons.search_rounded,
-            color: AppColors.textSecondary.withValues(alpha: 0.5),
+            color: context.textSecondaryColor.withValues(alpha: 0.5),
             size: 22,
           ),
           const SizedBox(width: 12),
@@ -119,15 +98,12 @@ class HomeContent extends StatelessWidget {
               controller: controller.searchController,
               focusNode: controller.searchFocusNode,
               onChanged: controller.onSearchChanged,
-              style: const TextStyle(
-                fontSize: 16,
-                color: AppColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: 16, color: context.textPrimaryColor),
               decoration: InputDecoration(
                 hintText: 'Search conversations...',
                 hintStyle: TextStyle(
                   fontSize: 16,
-                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                  color: context.textSecondaryColor.withValues(alpha: 0.5),
                 ),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -142,19 +118,19 @@ class HomeContent extends StatelessWidget {
                   padding: const EdgeInsets.all(14),
                   child: Icon(
                     Icons.close_rounded,
-                    color: AppColors.textSecondary.withValues(alpha: 0.5),
+                    color: context.textSecondaryColor.withValues(alpha: 0.5),
                     size: 20,
                   ),
                 ),
               );
             }
             return GestureDetector(
-              onTap: () => _showFilterBottomSheet(controller),
+              onTap: () => _showFilterBottomSheet(context, controller),
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Icon(
                   Icons.tune_rounded,
-                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                  color: context.textSecondaryColor.withValues(alpha: 0.5),
                   size: 22,
                 ),
               ),
@@ -165,7 +141,7 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterChips(HomeController controller) {
+  Widget _buildFilterChips(BuildContext context, HomeController controller) {
     return Obx(() {
       final hasActiveFilter =
           controller.selectedFilter.value != ConversationFilter.all ||
@@ -179,6 +155,7 @@ class HomeContent extends StatelessWidget {
           children: [
             if (controller.selectedFilter.value != ConversationFilter.all)
               _buildActiveFilterChip(
+                context: context,
                 label: controller.getFilterLabel(
                   controller.selectedFilter.value,
                 ),
@@ -188,6 +165,7 @@ class HomeContent extends StatelessWidget {
               if (controller.selectedFilter.value != ConversationFilter.all)
                 const SizedBox(width: 8),
               _buildActiveFilterChip(
+                context: context,
                 label: '"${controller.searchQuery.value}"',
                 onRemove: controller.clearSearch,
               ),
@@ -198,7 +176,7 @@ class HomeContent extends StatelessWidget {
                 '${controller.filteredConversations.length} results',
                 style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary.withValues(alpha: 0.7),
+                  color: context.textSecondaryColor.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -209,25 +187,26 @@ class HomeContent extends StatelessWidget {
   }
 
   Widget _buildActiveFilterChip({
+    required BuildContext context,
     required String label,
     required VoidCallback onRemove,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: context.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        border: Border.all(color: context.primaryColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: AppColors.primary,
+              color: context.primaryColor,
             ),
           ),
           const SizedBox(width: 6),
@@ -236,7 +215,7 @@ class HomeContent extends StatelessWidget {
             child: Icon(
               Icons.close_rounded,
               size: 16,
-              color: AppColors.primary.withValues(alpha: 0.7),
+              color: context.primaryColor.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -244,13 +223,15 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  void _showFilterBottomSheet(HomeController controller) {
+  void _showFilterBottomSheet(BuildContext context, HomeController controller) {
+    final isDark = context.isDark;
+
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: isDark ? AppColorsDark.surface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -261,23 +242,23 @@ class HomeContent extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: isDark ? AppColorsDark.divider : Colors.grey[300],
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Filter Conversations',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: context.textPrimaryColor,
               ),
             ),
             const SizedBox(height: 20),
             ...ConversationFilter.values.map(
-              (filter) => _buildFilterOption(controller, filter),
+              (filter) => _buildFilterOption(context, controller, filter),
             ),
             const SizedBox(height: 16),
           ],
@@ -287,9 +268,12 @@ class HomeContent extends StatelessWidget {
   }
 
   Widget _buildFilterOption(
+    BuildContext context,
     HomeController controller,
     ConversationFilter filter,
   ) {
+    final isDark = context.isDark;
+
     return Obx(() {
       final isSelected = controller.selectedFilter.value == filter;
       final count = controller.getFilterCount(filter);
@@ -305,20 +289,24 @@ class HomeContent extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.primary.withValues(alpha: 0.1)
+                ? context.primaryColor.withValues(alpha: 0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? AppColors.primary.withValues(alpha: 0.3)
-                  : Colors.grey.withValues(alpha: 0.2),
+                  ? context.primaryColor.withValues(alpha: 0.3)
+                  : (isDark ? AppColorsDark.divider : Colors.grey).withValues(
+                      alpha: 0.2,
+                    ),
             ),
           ),
           child: Row(
             children: [
               Icon(
                 _getFilterIcon(filter),
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: isSelected
+                    ? context.primaryColor
+                    : context.textSecondaryColor,
                 size: 22,
               ),
               const SizedBox(width: 14),
@@ -329,8 +317,8 @@ class HomeContent extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     color: isSelected
-                        ? AppColors.primary
-                        : AppColors.textPrimary,
+                        ? context.primaryColor
+                        : context.textPrimaryColor,
                   ),
                 ),
               ),
@@ -341,8 +329,9 @@ class HomeContent extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.primary.withValues(alpha: 0.2)
-                      : Colors.grey.withValues(alpha: 0.1),
+                      ? context.primaryColor.withValues(alpha: 0.2)
+                      : (isDark ? AppColorsDark.divider : Colors.grey)
+                            .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -351,16 +340,16 @@ class HomeContent extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: isSelected
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
+                        ? context.primaryColor
+                        : context.textSecondaryColor,
                   ),
                 ),
               ),
               if (isSelected) ...[
                 const SizedBox(width: 12),
-                const Icon(
+                Icon(
                   Icons.check_rounded,
-                  color: AppColors.primary,
+                  color: context.primaryColor,
                   size: 22,
                 ),
               ],
@@ -382,16 +371,19 @@ class HomeContent extends StatelessWidget {
     }
   }
 
-  Widget _buildConversationList(HomeController controller) {
+  Widget _buildConversationList(
+    BuildContext context,
+    HomeController controller,
+  ) {
     return Obx(() {
       final conversationsList = controller.filteredConversations;
 
       if (controller.conversations.isEmpty) {
-        return _buildEmptyState(controller);
+        return _buildEmptyState(context, controller);
       }
 
       if (conversationsList.isEmpty) {
-        return _buildNoResultsState(controller);
+        return _buildNoResultsState(context, controller);
       }
 
       return ListView.separated(
@@ -402,7 +394,7 @@ class HomeContent extends StatelessWidget {
           height: 1,
           indent: 88,
           endIndent: 20,
-          color: Colors.grey.withValues(alpha: 0.15),
+          color: context.dividerColor.withValues(alpha: 0.15),
         ),
         itemBuilder: (context, index) {
           final conversation = conversationsList[index];
@@ -416,7 +408,7 @@ class HomeContent extends StatelessWidget {
     });
   }
 
-  Widget _buildNoResultsState(HomeController controller) {
+  Widget _buildNoResultsState(BuildContext context, HomeController controller) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -424,22 +416,22 @@ class HomeContent extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
+              color: context.primaryColor.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: AppColors.primary.withValues(alpha: 0.5),
+              color: context.primaryColor.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'No results found',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: context.textPrimaryColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -447,7 +439,7 @@ class HomeContent extends StatelessWidget {
             'Try adjusting your search or filter',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary.withValues(alpha: 0.7),
+              color: context.textSecondaryColor.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 24),
@@ -459,15 +451,15 @@ class HomeContent extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.primary),
+                border: Border.all(color: context.primaryColor),
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: const Text(
+              child: Text(
                 'Clear filters',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                  color: context.primaryColor,
                 ),
               ),
             ),
@@ -477,7 +469,7 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(HomeController controller) {
+  Widget _buildEmptyState(BuildContext context, HomeController controller) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -485,22 +477,22 @@ class HomeContent extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
+              color: context.primaryColor.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.chat_bubble_outline_rounded,
               size: 56,
-              color: AppColors.primary.withValues(alpha: 0.5),
+              color: context.primaryColor.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'No conversations yet',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: context.textPrimaryColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -508,7 +500,7 @@ class HomeContent extends StatelessWidget {
             'Start a new chat to connect with friends',
             style: TextStyle(
               fontSize: 15,
-              color: AppColors.textSecondary.withValues(alpha: 0.7),
+              color: context.textSecondaryColor.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 32),
@@ -517,13 +509,16 @@ class HomeContent extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                gradient: LinearGradient(
+                  colors: [
+                    context.gradientStartColor,
+                    context.gradientEndColor,
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.35),
+                    color: context.primaryColor.withValues(alpha: 0.35),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -551,20 +546,20 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildFAB(HomeController controller) {
+  Widget _buildFAB(BuildContext context, HomeController controller) {
     return Container(
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+        gradient: LinearGradient(
+          colors: [context.gradientStartColor, context.gradientEndColor],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.4),
+            color: context.primaryColor.withValues(alpha: 0.4),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -625,7 +620,7 @@ class _ConversationTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             child: Row(
               children: [
-                _buildAvatar(otherUserName, otherUserPhoto),
+                _buildAvatar(context, otherUserName, otherUserPhoto),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -636,12 +631,13 @@ class _ConversationTile extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _buildHighlightedText(
+                              context,
                               otherUserName,
                               controller.searchQuery.value,
-                              const TextStyle(
+                              TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: context.textPrimaryColor,
                               ),
                             ),
                           ),
@@ -649,7 +645,7 @@ class _ConversationTile extends StatelessWidget {
                             _formatTime(conversation.lastMessageTime),
                             style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textSecondary.withValues(
+                              color: context.textSecondaryColor.withValues(
                                 alpha: 0.7,
                               ),
                             ),
@@ -661,6 +657,7 @@ class _ConversationTile extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _buildHighlightedText(
+                              context,
                               conversation.lastMessage.isNotEmpty
                                   ? conversation.lastMessage
                                   : 'No messages yet',
@@ -668,8 +665,8 @@ class _ConversationTile extends StatelessWidget {
                               TextStyle(
                                 fontSize: 15,
                                 color: unreadCount > 0
-                                    ? AppColors.textPrimary
-                                    : AppColors.textSecondary.withValues(
+                                    ? context.textPrimaryColor
+                                    : context.textSecondaryColor.withValues(
                                         alpha: 0.7,
                                       ),
                                 fontWeight: unreadCount > 0
@@ -681,7 +678,7 @@ class _ConversationTile extends StatelessWidget {
                           ),
                           if (unreadCount > 0) ...[
                             const SizedBox(width: 8),
-                            _buildUnreadBadge(unreadCount),
+                            _buildUnreadBadge(context, unreadCount),
                           ],
                         ],
                       ),
@@ -697,6 +694,7 @@ class _ConversationTile extends StatelessWidget {
   }
 
   Widget _buildHighlightedText(
+    BuildContext context,
     String text,
     String query,
     TextStyle style, {
@@ -735,7 +733,7 @@ class _ConversationTile extends StatelessWidget {
           TextSpan(
             text: text.substring(startIndex, endIndex),
             style: style.copyWith(
-              backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+              backgroundColor: context.primaryColor.withValues(alpha: 0.2),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -745,7 +743,7 @@ class _ConversationTile extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar(String name, String? photoUrl) {
+  Widget _buildAvatar(BuildContext context, String name, String? photoUrl) {
     final color = avatarColors[colorIndex % avatarColors.length];
 
     return Container(
@@ -761,21 +759,24 @@ class _ConversationTile extends StatelessWidget {
                 width: 52,
                 height: 52,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => _buildAvatarPlaceholder(name),
+                placeholder: (context, url) =>
+                    _buildAvatarPlaceholder(context, name),
                 errorWidget: (context, url, error) =>
-                    _buildAvatarPlaceholder(name),
+                    _buildAvatarPlaceholder(context, name),
               ),
             )
-          : _buildAvatarPlaceholder(name),
+          : _buildAvatarPlaceholder(context, name),
     );
   }
 
-  Widget _buildAvatarPlaceholder(String name) {
+  Widget _buildAvatarPlaceholder(BuildContext context, String name) {
+    final isDark = context.isDark;
+
     return Container(
       width: 52,
       height: 52,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: isDark ? AppColorsDark.surfaceLight : Colors.grey.shade200,
         shape: BoxShape.circle,
       ),
       child: Center(
@@ -784,18 +785,18 @@ class _ConversationTile extends StatelessWidget {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
+            color: isDark ? AppColorsDark.textSecondary : Colors.grey.shade600,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildUnreadBadge(int count) {
+  Widget _buildUnreadBadge(BuildContext context, int count) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: context.primaryColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(

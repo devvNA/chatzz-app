@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_controller.dart';
+import '../../../core/theme/theme_helper.dart';
 import '../controllers/settings_controller.dart';
 
 class SettingsView extends GetView<SettingsController> {
@@ -14,18 +16,18 @@ class SettingsView extends GetView<SettingsController> {
       init: SettingsController(),
       builder: (controller) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF0F9F6),
+          backgroundColor: context.settingsBackgroundColor,
           body: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                _buildProfileHeader(controller),
+                _buildProfileHeader(context, controller),
                 const SizedBox(height: 24),
-                _buildPersonalInfoCard(controller),
+                _buildPersonalInfoCard(context, controller),
                 const SizedBox(height: 16),
-                _buildSettingsCard(controller),
+                _buildSettingsCard(context, controller),
                 const SizedBox(height: 16),
-                _buildLogoutButton(controller),
+                _buildLogoutButton(context, controller),
                 const SizedBox(height: 130),
               ],
             ),
@@ -35,28 +37,28 @@ class SettingsView extends GetView<SettingsController> {
     );
   }
 
-  Widget _buildProfileHeader(SettingsController controller) {
+  Widget _buildProfileHeader(
+    BuildContext context,
+    SettingsController controller,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
       child: Column(
         children: [
-          // Avatar with online indicator
-          Obx(() => _buildAvatar(controller)),
+          Obx(() => _buildAvatar(context, controller)),
           const SizedBox(height: 20),
-          // Name
           Obx(
             () => Text(
               controller.currentUser.value?.name ?? 'User',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: context.textPrimaryColor,
               ),
             ),
           ),
           const SizedBox(height: 8),
-          // Status with edit icon
           GestureDetector(
             onTap: () => controller.onEditProfileTapped(),
             child: Obx(
@@ -66,8 +68,8 @@ class SettingsView extends GetView<SettingsController> {
                   Container(
                     width: 10,
                     height: 10,
-                    decoration: const BoxDecoration(
-                      color: AppColors.accent,
+                    decoration: BoxDecoration(
+                      color: context.accentColor,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -76,14 +78,14 @@ class SettingsView extends GetView<SettingsController> {
                     controller.userStatus.value,
                     style: TextStyle(
                       fontSize: 15,
-                      color: AppColors.textSecondary.withValues(alpha: 0.8),
+                      color: context.textSecondaryColor.withValues(alpha: 0.8),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Icon(
                     Icons.edit_outlined,
                     size: 18,
-                    color: AppColors.textSecondary.withValues(alpha: 0.6),
+                    color: context.textSecondaryColor.withValues(alpha: 0.6),
                   ),
                 ],
               ),
@@ -94,23 +96,27 @@ class SettingsView extends GetView<SettingsController> {
     );
   }
 
-  Widget _buildAvatar(SettingsController controller) {
+  Widget _buildAvatar(BuildContext context, SettingsController controller) {
     final user = controller.currentUser.value;
     final photoUrl = user?.photoUrl;
     final name = user?.name ?? '';
 
     return Stack(
       children: [
-        // Avatar with gradient ring
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withValues(alpha: 0.3),
-                AppColors.gradientEnd.withValues(alpha: 0.3),
-              ],
+              colors: context.isDark
+                  ? [
+                      AppColorsDark.primary.withValues(alpha: 0.3),
+                      AppColorsDark.gradientEnd.withValues(alpha: 0.3),
+                    ]
+                  : [
+                      AppColors.primary.withValues(alpha: 0.3),
+                      AppColors.gradientEnd.withValues(alpha: 0.3),
+                    ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -120,7 +126,10 @@ class SettingsView extends GetView<SettingsController> {
             height: 120,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 4),
+              border: Border.all(
+                color: context.isDark ? AppColorsDark.surface : Colors.white,
+                width: 4,
+              ),
             ),
             child: ClipOval(
               child: photoUrl != null && photoUrl.isNotEmpty
@@ -128,15 +137,14 @@ class SettingsView extends GetView<SettingsController> {
                       imageUrl: photoUrl,
                       fit: BoxFit.cover,
                       placeholder: (context, url) =>
-                          _buildAvatarPlaceholder(name),
+                          _buildAvatarPlaceholder(context, name),
                       errorWidget: (context, url, error) =>
-                          _buildAvatarPlaceholder(name),
+                          _buildAvatarPlaceholder(context, name),
                     )
-                  : _buildAvatarPlaceholder(name),
+                  : _buildAvatarPlaceholder(context, name),
             ),
           ),
         ),
-        // Online indicator
         Positioned(
           bottom: 8,
           right: 8,
@@ -144,9 +152,12 @@ class SettingsView extends GetView<SettingsController> {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: AppColors.accent,
+              color: context.accentColor,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
+              border: Border.all(
+                color: context.isDark ? AppColorsDark.surface : Colors.white,
+                width: 3,
+              ),
             ),
           ),
         ),
@@ -154,36 +165,42 @@ class SettingsView extends GetView<SettingsController> {
     );
   }
 
-  Widget _buildAvatarPlaceholder(String name) {
+  Widget _buildAvatarPlaceholder(BuildContext context, String name) {
     return Container(
-      color: AppColors.primary.withValues(alpha: 0.2),
+      color: context.isDark
+          ? AppColorsDark.primary.withValues(alpha: 0.2)
+          : AppColors.primary.withValues(alpha: 0.2),
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 48,
             fontWeight: FontWeight.w600,
-            color: AppColors.primary,
+            color: context.primaryColor,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPersonalInfoCard(SettingsController controller) {
+  Widget _buildPersonalInfoCard(
+    BuildContext context,
+    SettingsController controller,
+  ) {
     return _buildSection(
+      context: context,
       title: 'Personal Information',
       children: [
-        // Phone
         _buildInfoRow(
+          context: context,
           icon: Icons.phone_outlined,
-          label: '+1 (555) 123-4567',
+          label: '0821-4218-5804',
           onTap: () => controller.onPhoneTapped(),
         ),
-        Divider(height: 32, color: AppColors.primary.withValues(alpha: 0.15)),
-        // Email
+        _buildDivider(context),
         Obx(
           () => _buildInfoRow(
+            context: context,
             icon: Icons.email_outlined,
             label: controller.currentUser.value?.email ?? 'email@example.com',
             onTap: () => controller.onEmailTapped(),
@@ -193,33 +210,45 @@ class SettingsView extends GetView<SettingsController> {
     );
   }
 
-  Widget _buildSettingsCard(SettingsController controller) {
+  Widget _buildSettingsCard(
+    BuildContext context,
+    SettingsController controller,
+  ) {
+    final themeController = Get.find<ThemeController>();
+
     return _buildSection(
+      context: context,
       title: 'Settings',
       children: [
-        // Notifications with toggle
         _buildSettingsRowWithToggle(
+          context: context,
           icon: Icons.notifications_outlined,
           label: 'Notifications',
-          controller: controller,
+          value: controller.notificationsEnabled.value,
+          onChanged: controller.toggleNotifications,
         ),
-        Divider(height: 32, color: AppColors.primary.withValues(alpha: 0.15)),
-        // Privacy
+        _buildDivider(context),
         _buildSettingsRow(
+          context: context,
           icon: Icons.lock_outline,
           label: 'Privacy',
           onTap: () => controller.onPrivacyTapped(),
         ),
-        Divider(height: 32, color: AppColors.primary.withValues(alpha: 0.15)),
-        // Appearance
-        _buildSettingsRow(
-          icon: Icons.contrast_rounded,
-          label: 'Appearance',
-          onTap: () => controller.onAppearanceTapped(),
+        _buildDivider(context),
+        Obx(
+          () => _buildSettingsRowWithToggle(
+            context: context,
+            icon: themeController.isDarkMode
+                ? Icons.dark_mode_rounded
+                : Icons.light_mode_rounded,
+            label: 'Dark Mode',
+            value: themeController.isDarkMode,
+            onChanged: controller.toggleDarkMode,
+          ),
         ),
-        Divider(height: 32, color: AppColors.primary.withValues(alpha: 0.15)),
-        // Help & Support
+        _buildDivider(context),
         _buildSettingsRow(
+          context: context,
           icon: Icons.help_outline_rounded,
           label: 'Help & Support',
           onTap: () => controller.onHelpSupportTapped(),
@@ -228,7 +257,17 @@ class SettingsView extends GetView<SettingsController> {
     );
   }
 
+  Widget _buildDivider(BuildContext context) {
+    return Divider(
+      height: 32,
+      color: context.isDark
+          ? AppColorsDark.divider.withValues(alpha: 0.3)
+          : AppColors.primary.withValues(alpha: 0.15),
+    );
+  }
+
   Widget _buildSection({
+    required BuildContext context,
     required String title,
     required List<Widget> children,
   }) {
@@ -236,16 +275,25 @@ class SettingsView extends GetView<SettingsController> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.softGradientStart, AppColors.softGradientEnd],
+        gradient: LinearGradient(
+          colors: context.isDark
+              ? [AppColorsDark.surface, AppColorsDark.surfaceLight]
+              : [AppColors.softGradientStart, AppColors.softGradientEnd],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 2),
+        border: Border.all(
+          color: context.isDark
+              ? AppColorsDark.border.withValues(alpha: 0.2)
+              : Colors.white,
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.05),
+            color: context.isDark
+                ? Colors.black.withValues(alpha: 0.3)
+                : AppColors.primary.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -256,11 +304,12 @@ class SettingsView extends GetView<SettingsController> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors
-                  .primaryDark, // Slightly darker for better contrast on gradient
+              color: context.isDark
+                  ? AppColorsDark.primary
+                  : AppColors.primaryDark,
             ),
           ),
           const SizedBox(height: 20),
@@ -271,6 +320,7 @@ class SettingsView extends GetView<SettingsController> {
   }
 
   Widget _buildInfoRow({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -278,44 +328,53 @@ class SettingsView extends GetView<SettingsController> {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: context.isDark
+                  ? AppColorsDark.primary.withValues(alpha: 0.15)
+                  : AppColors.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: context.isDark
+                  ? AppColorsDark.primary
+                  : AppColors.primaryDark,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: context.textPrimaryColor,
               ),
-              child: Icon(icon, color: AppColors.primaryDark, size: 22),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textSecondary.withValues(alpha: 0.5),
-              size: 24,
-            ),
-          ],
-        ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: context.isDark
+                ? AppColorsDark.textSecondary.withValues(alpha: 0.5)
+                : AppColors.textSecondary.withValues(alpha: 0.5),
+            size: 24,
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildSettingsRowWithToggle({
+    required BuildContext context,
     required IconData icon,
     required String label,
-    required SettingsController controller,
+    required bool value,
+    required Function(bool) onChanged,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -324,31 +383,42 @@ class SettingsView extends GetView<SettingsController> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12), // Consistent radius
+              color: context.isDark
+                  ? AppColorsDark.primary.withValues(alpha: 0.15)
+                  : AppColors.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppColors.primaryDark, size: 22),
+            child: Icon(
+              icon,
+              color: context.isDark
+                  ? AppColorsDark.primary
+                  : AppColors.primaryDark,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+                color: context.textPrimaryColor,
               ),
             ),
           ),
-          Obx(
-            () => Switch(
-              value: controller.notificationsEnabled.value,
-              onChanged: controller.toggleNotifications,
-              activeColor: Colors.white,
-              activeTrackColor: AppColors.primary,
-              inactiveThumbColor: Colors.white,
-              inactiveTrackColor: Colors.grey.shade300,
-            ),
+          Switch(
+            value: value,
+            onChanged: (value) {
+              onChanged(value);
+              controller.update();
+            },
+            activeColor: Colors.white,
+            activeTrackColor: context.primaryColor,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: context.isDark
+                ? AppColorsDark.surfaceLight
+                : Colors.grey.shade300,
           ),
         ],
       ),
@@ -356,6 +426,7 @@ class SettingsView extends GetView<SettingsController> {
   }
 
   Widget _buildSettingsRow({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -370,25 +441,35 @@ class SettingsView extends GetView<SettingsController> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
+                color: context.isDark
+                    ? AppColorsDark.primary.withValues(alpha: 0.15)
+                    : AppColors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppColors.primaryDark, size: 22),
+              child: Icon(
+                icon,
+                color: context.isDark
+                    ? AppColorsDark.primary
+                    : AppColors.primaryDark,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
+                  color: context.textPrimaryColor,
                 ),
               ),
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.textSecondary.withValues(alpha: 0.5),
+              color: context.isDark
+                  ? AppColorsDark.textSecondary.withValues(alpha: 0.5)
+                  : AppColors.textSecondary.withValues(alpha: 0.5),
               size: 24,
             ),
           ],
@@ -397,15 +478,18 @@ class SettingsView extends GetView<SettingsController> {
     );
   }
 
-  Widget _buildLogoutButton(SettingsController controller) {
+  Widget _buildLogoutButton(
+    BuildContext context,
+    SettingsController controller,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () => _showLogoutConfirmation(controller),
+        onPressed: () => _showLogoutConfirmation(context, controller),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.red,
-          side: const BorderSide(color: Colors.red, width: 1.5),
+          foregroundColor: AppColors.error,
+          side: const BorderSide(color: AppColors.error, width: 1.5),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -420,20 +504,24 @@ class SettingsView extends GetView<SettingsController> {
     );
   }
 
-  void _showLogoutConfirmation(SettingsController controller) {
+  void _showLogoutConfirmation(
+    BuildContext context,
+    SettingsController controller,
+  ) {
     Get.dialog(
       AlertDialog(
+        backgroundColor: context.isDark ? AppColorsDark.surface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           'Logout',
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: context.textPrimaryColor,
           ),
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to logout?',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: context.textSecondaryColor),
         ),
         actions: [
           TextButton(
@@ -441,7 +529,9 @@ class SettingsView extends GetView<SettingsController> {
             child: Text(
               'Cancel',
               style: TextStyle(
-                color: AppColors.textSecondary.withValues(alpha: 0.8),
+                color: context.isDark
+                    ? AppColorsDark.textSecondary.withValues(alpha: 0.8)
+                    : AppColors.textSecondary.withValues(alpha: 0.8),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -451,9 +541,12 @@ class SettingsView extends GetView<SettingsController> {
               Get.back();
               controller.signOut();
             },
-            child: const Text(
+            child: Text(
               'Logout',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: context.isDark ? AppColorsDark.error : AppColors.error,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

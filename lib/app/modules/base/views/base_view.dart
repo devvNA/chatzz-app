@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_helper.dart';
 import '../../home/views/home_view.dart';
 import '../../settings/views/settings_view.dart';
 import '../controllers/base_controller.dart';
@@ -12,13 +13,11 @@ class BaseView extends GetView<BaseController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FFFE),
+      backgroundColor: context.screenBackgroundColor,
       extendBody: true,
       body: Stack(
         children: [
-          // Body content
           Obx(() => _buildBody()),
-          // Floating bottom navigation bar
           Positioned(
             left: 0,
             right: 0,
@@ -35,9 +34,13 @@ class BaseView extends GetView<BaseController> {
       case 0:
         return const HomeView();
       case 1:
-        return _buildComingSoonPage('Contacts', Icons.group_rounded);
+        return Builder(
+          builder: (context) => _buildComingSoonPage(context, 'Contacts', Icons.group_rounded),
+        );
       case 2:
-        return _buildComingSoonPage('Explore', Icons.explore_rounded);
+        return Builder(
+          builder: (context) => _buildComingSoonPage(context, 'Explore', Icons.explore_rounded),
+        );
       case 3:
         return const SettingsView();
       default:
@@ -45,7 +48,7 @@ class BaseView extends GetView<BaseController> {
     }
   }
 
-  Widget _buildComingSoonPage(String title, IconData icon) {
+  Widget _buildComingSoonPage(BuildContext context, String title, IconData icon) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -53,22 +56,22 @@ class BaseView extends GetView<BaseController> {
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
+              color: context.primaryColor.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
               size: 56,
-              color: AppColors.primary.withValues(alpha: 0.5),
+              color: context.primaryColor.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 24),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: context.textPrimaryColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -76,7 +79,7 @@ class BaseView extends GetView<BaseController> {
             'Coming Soon',
             style: TextStyle(
               fontSize: 16,
-              color: AppColors.textSecondary.withValues(alpha: 0.7),
+              color: context.textSecondaryColor.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -86,21 +89,31 @@ class BaseView extends GetView<BaseController> {
 
   Widget _buildFloatingBottomNavBar(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final isDark = context.isDark;
 
     return Obx(
       () => Container(
         margin: EdgeInsets.fromLTRB(24, 0, 24, 16 + bottomPadding),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.softGradientStart, AppColors.softGradientEnd],
+          gradient: LinearGradient(
+            colors: isDark
+                ? [AppColorsDark.surface, AppColorsDark.surfaceLight]
+                : [AppColors.softGradientStart, AppColors.softGradientEnd],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
           borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: Colors.white, width: 2),
+          border: Border.all(
+            color: isDark 
+                ? AppColorsDark.border.withValues(alpha: 0.3) 
+                : Colors.white,
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.15),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : AppColors.primary.withValues(alpha: 0.15),
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),
@@ -112,25 +125,29 @@ class BaseView extends GetView<BaseController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildNavItem(
+                context: context,
                 icon: Icons.chat_bubble_rounded,
                 label: 'Chats',
                 index: 0,
                 isSelected: controller.selectedIndex.value == 0,
               ),
               _buildNavItem(
+                context: context,
                 icon: Icons.group_rounded,
                 label: 'Contacts',
                 index: 1,
                 isSelected: controller.selectedIndex.value == 1,
               ),
               _buildNavItem(
+                context: context,
                 icon: Icons.explore_rounded,
                 label: 'Explore',
                 index: 2,
                 isSelected: controller.selectedIndex.value == 2,
               ),
               _buildNavItem(
-                icon: Icons.settings_rounded,
+                context: context,
+                icon: Icons.person_2_rounded,
                 label: 'Profile',
                 index: 3,
                 isSelected: controller.selectedIndex.value == 3,
@@ -143,15 +160,18 @@ class BaseView extends GetView<BaseController> {
   }
 
   Widget _buildNavItem({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required int index,
     required bool isSelected,
     bool showBadge = false,
   }) {
+    final isDark = context.isDark;
+    
     final color = isSelected
-        ? const Color(0xFF005C4B)
-        : const Color(0xFF588B7E);
+        ? (isDark ? AppColorsDark.primary : const Color(0xFF005C4B))
+        : (isDark ? AppColorsDark.textSecondary : const Color(0xFF588B7E));
 
     return GestureDetector(
       onTap: () => controller.onNavItemTapped(index),
@@ -173,9 +193,12 @@ class BaseView extends GetView<BaseController> {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: AppColors.accent,
+                        color: context.accentColor,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
+                        border: Border.all(
+                          color: isDark ? AppColorsDark.surface : Colors.white,
+                          width: 1.5,
+                        ),
                       ),
                     ),
                   ),

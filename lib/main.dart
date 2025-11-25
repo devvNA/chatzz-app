@@ -1,4 +1,5 @@
 import 'package:chatzz/app/core/theme/app_theme.dart';
+import 'package:chatzz/app/core/theme/theme_controller.dart';
 import 'package:chatzz/app/routes/app_pages.dart';
 import 'package:chatzz/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,14 +11,16 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Future.wait([
-    GetStorage.init(), // Required: LocalStorage digunakan di splash screen
-    Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    ), // Cri
+    GetStorage.init(),
+    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
   ]);
+
+  // Initialize ThemeController before running app
+  Get.put(ThemeController(), permanent: true);
+
   await AppPages.initServices();
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -25,6 +28,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+
     return GestureDetector(
       onTap: () {
         final currentFocus = FocusManager.instance.primaryFocus;
@@ -32,13 +37,17 @@ class MyApp extends StatelessWidget {
           currentFocus.unfocus();
         }
       },
-      child: GetMaterialApp(
-        // initialBinding: AppBinding(),
-        popGesture: true,
-        debugShowCheckedModeBanner: false,
-        theme: myTheme,
-        initialRoute: AppPages.INITIAL,
-        getPages: AppPages.routes,
+      child: Obx(
+        () => GetMaterialApp(
+          key: ValueKey(themeController.isDarkMode),
+          popGesture: true,
+          debugShowCheckedModeBanner: false,
+          theme: myTheme,
+          darkTheme: myDarkTheme,
+          themeMode: themeController.themeMode,
+          initialRoute: AppPages.INITIAL,
+          getPages: AppPages.routes,
+        ),
       ),
     );
   }
