@@ -29,10 +29,14 @@ class HomeContent extends StatelessWidget {
           body: Column(
             children: [
               _buildGradientHeader(context, controller),
+              _buildFilterChips(controller),
               Expanded(child: _buildConversationList(controller)),
             ],
           ),
-          floatingActionButton: _buildFAB(controller),
+          floatingActionButton: Padding(
+            padding: EdgeInsets.only(bottom: Get.height * 0.12, right: 12),
+            child: _buildFAB(controller),
+          ),
         );
       },
     );
@@ -79,7 +83,7 @@ class HomeContent extends StatelessWidget {
                 ],
               ),
             ),
-            _buildSearchBar(),
+            _buildSearchBar(controller),
             const SizedBox(height: 16),
           ],
         ),
@@ -87,10 +91,9 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(HomeController controller) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -104,6 +107,7 @@ class HomeContent extends StatelessWidget {
       ),
       child: Row(
         children: [
+          const SizedBox(width: 16),
           Icon(
             Icons.search_rounded,
             color: AppColors.textSecondary.withValues(alpha: 0.5),
@@ -111,34 +115,289 @@ class HomeContent extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              'Search',
-              style: TextStyle(
+            child: TextField(
+              controller: controller.searchController,
+              focusNode: controller.searchFocusNode,
+              onChanged: controller.onSearchChanged,
+              style: const TextStyle(
                 fontSize: 16,
-                color: AppColors.textSecondary.withValues(alpha: 0.5),
+                color: AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Search conversations...',
+                hintStyle: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ),
-          Icon(
-            Icons.tune_rounded,
-            color: AppColors.textSecondary.withValues(alpha: 0.5),
-            size: 22,
+          Obx(() {
+            if (controller.searchQuery.value.isNotEmpty) {
+              return GestureDetector(
+                onTap: controller.clearSearch,
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textSecondary.withValues(alpha: 0.5),
+                    size: 20,
+                  ),
+                ),
+              );
+            }
+            return GestureDetector(
+              onTap: () => _showFilterBottomSheet(controller),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Icon(
+                  Icons.tune_rounded,
+                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                  size: 22,
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChips(HomeController controller) {
+    return Obx(() {
+      final hasActiveFilter =
+          controller.selectedFilter.value != ConversationFilter.all ||
+          controller.searchQuery.value.isNotEmpty;
+
+      if (!hasActiveFilter) return const SizedBox.shrink();
+
+      return Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+        child: Row(
+          children: [
+            if (controller.selectedFilter.value != ConversationFilter.all)
+              _buildActiveFilterChip(
+                label: controller.getFilterLabel(
+                  controller.selectedFilter.value,
+                ),
+                onRemove: () => controller.setFilter(ConversationFilter.all),
+              ),
+            if (controller.searchQuery.value.isNotEmpty) ...[
+              if (controller.selectedFilter.value != ConversationFilter.all)
+                const SizedBox(width: 8),
+              _buildActiveFilterChip(
+                label: '"${controller.searchQuery.value}"',
+                onRemove: controller.clearSearch,
+              ),
+            ],
+            const Spacer(),
+            Obx(
+              () => Text(
+                '${controller.filteredConversations.length} results',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildActiveFilterChip({
+    required String label,
+    required VoidCallback onRemove,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: onRemove,
+            child: Icon(
+              Icons.close_rounded,
+              size: 16,
+              color: AppColors.primary.withValues(alpha: 0.7),
+            ),
           ),
         ],
       ),
     );
   }
 
+  void _showFilterBottomSheet(HomeController controller) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Filter Conversations',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ...ConversationFilter.values.map(
+              (filter) => _buildFilterOption(controller, filter),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterOption(
+    HomeController controller,
+    ConversationFilter filter,
+  ) {
+    return Obx(() {
+      final isSelected = controller.selectedFilter.value == filter;
+      final count = controller.getFilterCount(filter);
+
+      return InkWell(
+        onTap: () {
+          controller.setFilter(filter);
+          Get.back();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.1)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : Colors.grey.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _getFilterIcon(filter),
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                size: 22,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  controller.getFilterLabel(filter),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primary.withValues(alpha: 0.2)
+                      : Colors.grey.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              if (isSelected) ...[
+                const SizedBox(width: 12),
+                const Icon(
+                  Icons.check_rounded,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  IconData _getFilterIcon(ConversationFilter filter) {
+    switch (filter) {
+      case ConversationFilter.all:
+        return Icons.chat_bubble_outline_rounded;
+      case ConversationFilter.unread:
+        return Icons.mark_chat_unread_outlined;
+      case ConversationFilter.recent:
+        return Icons.access_time_rounded;
+    }
+  }
+
   Widget _buildConversationList(HomeController controller) {
     return Obx(() {
+      final conversationsList = controller.filteredConversations;
+
       if (controller.conversations.isEmpty) {
         return _buildEmptyState(controller);
+      }
+
+      if (conversationsList.isEmpty) {
+        return _buildNoResultsState(controller);
       }
 
       return ListView.separated(
         padding: const EdgeInsets.only(top: 8, bottom: 100),
         physics: const BouncingScrollPhysics(),
-        itemCount: controller.conversations.length,
+        itemCount: conversationsList.length,
         separatorBuilder: (context, index) => Divider(
           height: 1,
           indent: 88,
@@ -146,7 +405,7 @@ class HomeContent extends StatelessWidget {
           color: Colors.grey.withValues(alpha: 0.15),
         ),
         itemBuilder: (context, index) {
-          final conversation = controller.conversations[index];
+          final conversation = conversationsList[index];
           return _ConversationTile(
             conversation: conversation,
             controller: controller,
@@ -155,6 +414,67 @@ class HomeContent extends StatelessWidget {
         },
       );
     });
+  }
+
+  Widget _buildNoResultsState(HomeController controller) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.search_off_rounded,
+              size: 48,
+              color: AppColors.primary.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'No results found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting your search or filter',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 24),
+          GestureDetector(
+            onTap: () {
+              controller.clearSearch();
+              controller.setFilter(ConversationFilter.all);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.primary),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: const Text(
+                'Clear filters',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyState(HomeController controller) {
@@ -315,14 +635,14 @@ class _ConversationTile extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
-                            child: Text(
+                            child: _buildHighlightedText(
                               otherUserName,
-                              style: const TextStyle(
+                              controller.searchQuery.value,
+                              const TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Text(
@@ -340,13 +660,12 @@ class _ConversationTile extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: Text(
+                            child: _buildHighlightedText(
                               conversation.lastMessage.isNotEmpty
                                   ? conversation.lastMessage
                                   : 'No messages yet',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              controller.searchQuery.value,
+                              TextStyle(
                                 fontSize: 15,
                                 color: unreadCount > 0
                                     ? AppColors.textPrimary
@@ -357,6 +676,7 @@ class _ConversationTile extends StatelessWidget {
                                     ? FontWeight.w500
                                     : FontWeight.w400,
                               ),
+                              maxLines: 1,
                             ),
                           ),
                           if (unreadCount > 0) ...[
@@ -373,6 +693,55 @@ class _ConversationTile extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHighlightedText(
+    String text,
+    String query,
+    TextStyle style, {
+    int maxLines = 1,
+  }) {
+    if (query.isEmpty) {
+      return Text(
+        text,
+        style: style,
+        maxLines: maxLines,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final lowerText = text.toLowerCase();
+    final lowerQuery = query.toLowerCase();
+    final startIndex = lowerText.indexOf(lowerQuery);
+
+    if (startIndex == -1) {
+      return Text(
+        text,
+        style: style,
+        maxLines: maxLines,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final endIndex = startIndex + query.length;
+
+    return RichText(
+      maxLines: maxLines,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(
+        children: [
+          TextSpan(text: text.substring(0, startIndex), style: style),
+          TextSpan(
+            text: text.substring(startIndex, endIndex),
+            style: style.copyWith(
+              backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          TextSpan(text: text.substring(endIndex), style: style),
+        ],
+      ),
     );
   }
 
