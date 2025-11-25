@@ -136,7 +136,7 @@ class HomeContent extends StatelessWidget {
       }
 
       return ListView.separated(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.only(top: 8, bottom: 100),
         physics: const BouncingScrollPhysics(),
         itemCount: controller.conversations.length,
         separatorBuilder: (context, index) => Divider(

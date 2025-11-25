@@ -13,8 +13,20 @@ class BaseView extends GetView<BaseController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FFFE),
-      body: Obx(() => _buildBody()),
-      bottomNavigationBar: _buildBottomNavBar(),
+      extendBody: true,
+      body: Stack(
+        children: [
+          // Body content
+          Obx(() => _buildBody()),
+          // Floating bottom navigation bar
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildFloatingBottomNavBar(context),
+          ),
+        ],
+      ),
     );
   }
 
@@ -23,12 +35,9 @@ class BaseView extends GetView<BaseController> {
       case 0:
         return const HomeView();
       case 1:
-        return _buildComingSoonPage('Friends', Icons.people_rounded);
+        return _buildComingSoonPage('Contacts', Icons.group_rounded);
       case 2:
-        return _buildComingSoonPage(
-          'Messages',
-          Icons.chat_bubble_outline_rounded,
-        );
+        return _buildComingSoonPage('Explore', Icons.explore_rounded);
       case 3:
         return const SettingsView();
       default:
@@ -75,46 +84,58 @@ class BaseView extends GetView<BaseController> {
     );
   }
 
-  Widget _buildBottomNavBar() {
+  Widget _buildFloatingBottomNavBar(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Obx(
       () => Container(
+        margin: EdgeInsets.fromLTRB(24, 0, 24, 16 + bottomPadding),
         decoration: BoxDecoration(
-          color: Colors.white,
+          gradient: const LinearGradient(
+            colors: [AppColors.softGradientStart, AppColors.softGradientEnd],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
+              color: AppColors.primary.withValues(alpha: 0.15),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  index: 0,
-                  isSelected: controller.selectedIndex.value == 0,
-                ),
-                _buildNavItem(
-                  icon: Icons.people_rounded,
-                  label: 'Friends',
-                  index: 1,
-                  isSelected: controller.selectedIndex.value == 1,
-                ),
-                _buildNavItem(
-                  icon: Icons.settings_rounded,
-                  label: 'Settings',
-                  index: 2,
-                  isSelected: controller.selectedIndex.value == 3,
-                ),
-              ],
-            ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildNavItem(
+                icon: Icons.chat_bubble_rounded,
+                label: 'Chats',
+                index: 0,
+                isSelected: controller.selectedIndex.value == 0,
+              ),
+              _buildNavItem(
+                icon: Icons.group_rounded,
+                label: 'Contacts',
+                index: 1,
+                isSelected: controller.selectedIndex.value == 1,
+              ),
+              _buildNavItem(
+                icon: Icons.explore_rounded,
+                label: 'Explore',
+                index: 2,
+                isSelected: controller.selectedIndex.value == 2,
+              ),
+              _buildNavItem(
+                icon: Icons.settings_rounded,
+                label: 'Profile',
+                index: 3,
+                isSelected: controller.selectedIndex.value == 3,
+              ),
+            ],
           ),
         ),
       ),
@@ -126,25 +147,39 @@ class BaseView extends GetView<BaseController> {
     required String label,
     required int index,
     required bool isSelected,
+    bool showBadge = false,
   }) {
+    final color = isSelected
+        ? const Color(0xFF005C4B)
+        : const Color(0xFF588B7E);
+
     return GestureDetector(
       onTap: () => controller.onNavItemTapped(index),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: isSelected
-            ? BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              )
-            : null,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.primary : Colors.grey,
-              size: 26,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(icon, color: color, size: 28),
+                if (showBadge)
+                  Positioned(
+                    top: 0,
+                    right: -2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 4),
             Text(
@@ -152,7 +187,7 @@ class BaseView extends GetView<BaseController> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : Colors.grey,
+                color: color,
               ),
             ),
           ],

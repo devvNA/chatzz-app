@@ -26,7 +26,7 @@ class SettingsView extends GetView<SettingsController> {
                 _buildSettingsCard(controller),
                 const SizedBox(height: 16),
                 _buildLogoutButton(controller),
-                const SizedBox(height: 32),
+                const SizedBox(height: 130),
               ],
             ),
           ),
