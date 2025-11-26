@@ -1,3 +1,5 @@
+import 'package:chatzz/app/modules/profile/bindings/profile_binding.dart';
+import 'package:chatzz/app/modules/profile/views/profile_view.dart';
 import 'package:get/get.dart';
 
 import '../data/services/auth_service.dart';
@@ -10,6 +12,8 @@ import '../modules/base/bindings/base_binding.dart';
 import '../modules/base/views/base_view.dart';
 import '../modules/chat/bindings/chat_binding.dart';
 import '../modules/chat/views/chat_view.dart';
+import '../modules/contacts/bindings/contacts_binding.dart';
+import '../modules/contacts/views/contacts_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/home/views/new_chat_view.dart';
@@ -65,13 +69,6 @@ class AppPages {
       page: () => const NewChatView(),
       binding: HomeBinding(),
     ),
-
-    // Profile route - future implementation
-    // GetPage(
-    //   name: _Paths.PROFILE,
-    //   page: () => const ProfileView(),
-    //   binding: ProfileBinding(),
-    // ),
     GetPage(
       name: _Paths.SETTINGS,
       page: () => const SettingsView(),
@@ -81,6 +78,16 @@ class AppPages {
       name: _Paths.BASE,
       page: () => const BaseView(),
       binding: BaseBinding(),
+    ),
+    GetPage(
+      name: _Paths.CONTACTS,
+      page: () => const ContactsView(),
+      binding: ContactsBinding(),
+    ),
+    GetPage(
+      name: _Paths.PROFILE,
+      page: () => const ProfileView(),
+      binding: ProfileBinding(),
     ),
   ];
 

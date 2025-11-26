@@ -1,3 +1,4 @@
+import 'package:chatzz/app/modules/contacts/views/contacts_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -34,10 +35,7 @@ class BaseView extends GetView<BaseController> {
       case 0:
         return const HomeView();
       case 1:
-        return Builder(
-          builder: (context) =>
-              _buildComingSoonPage(context, 'Contacts', Icons.group_rounded),
-        );
+        return const ContactsView();
       case 2:
         return Builder(
           builder: (context) =>

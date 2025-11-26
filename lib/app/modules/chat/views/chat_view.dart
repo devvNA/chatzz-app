@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:chatzz/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -190,7 +191,13 @@ class ChatView extends GetView<ChatController> {
               context: context,
               icon: Icons.person_outline,
               label: 'View Profile',
-              onTap: () => Get.back(),
+              onTap: () {
+                Get.back(); // Close bottom sheet first
+                Get.toNamed(
+                  Routes.PROFILE,
+                  arguments: {'userId': controller.otherUser.value?.id},
+                );
+              },
             ),
             _buildOptionItem(
               context: context,

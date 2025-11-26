@@ -547,17 +547,13 @@ class HomeView extends GetView<HomeController> {
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [context.gradientStartColor, context.gradientEndColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: context.backgroundColor.withValues(alpha: 0.50),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: context.primaryColor.withValues(alpha: 0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: context.primaryColor.withValues(alpha: 0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -566,10 +562,11 @@ class HomeView extends GetView<HomeController> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),
-        child: const Icon(
-          Icons.chat_bubble_rounded,
-          color: Colors.white,
-          size: 26,
+        child: Image.asset(
+          'assets/app-logo.png',
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
         ),
       ),
     );

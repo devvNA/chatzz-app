@@ -132,36 +132,25 @@ class LoginView extends GetView<LoginController> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.gradientStart, AppColors.gradientEnd],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.35),
-                blurRadius: 30,
-                offset: const Offset(0, 12),
+                color: AppColors.primary.withValues(alpha: 0.15),
+                blurRadius: 60,
+                spreadRadius: 10,
               ),
             ],
           ),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.chat_bubble_rounded,
-              size: 44,
-              color: Colors.white,
+          child: ClipOval(
+            child: Image.asset(
+              'assets/app-logo.png',
+              width: 140,
+              height: 140,
+              fit: BoxFit.cover,
             ),
           ),
         ),
-        const SizedBox(height: 24),
         ShaderMask(
           shaderCallback: (bounds) => const LinearGradient(
             colors: [AppColors.gradientStart, AppColors.gradientEnd],

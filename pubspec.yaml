@@ -47,7 +47,7 @@ dependencies:
 
   # Local Storage (Simple)
   get_storage: ^2.1.1 # Untuk menyimpan session login user
-  get: ^4.7.2
+  get: ^4.7.3
   dartz: ^0.10.1
 
 dev_dependencies:
